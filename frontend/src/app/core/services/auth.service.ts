@@ -1,10 +1,10 @@
 // Authentication and user management service.
 import { HttpClient } from '@angular/common/http';
 import { Observable , map , catchError , of } from 'rxjs';
-const API = 'http://localhost:5000/api/auth';
 import { Injectable, computed, signal } from '@angular/core';
 import { Role, User } from '../models/models';
 
+const API = 'http://localhost:5000/api/auth';
 const USERS = 'todo_users', SESSION = 'todo_session';
 const uid = () => Math.random().toString(36).slice(2, 10);
 

@@ -34,14 +34,11 @@ export class RegisterComponent {
   }, { validators: match });
   get c() { return this.form.controls; }
 
-  submit() {
-    const { name, email, password } = this.form.getRawValue();
-    this.auth.register(name, email, password).subscribe(err => {
-      if (err) { this.error.set(err); return; }
-      this.auth.login(email, password).subscribe(res => {
-        if (res.error) { this.error.set(res.error); return; }
-        this.router.navigate(['/dashboard']);
-      });
-    });
-  }
+ submit() {
+  const { name, email, password } = this.form.getRawValue();
+  this.auth.register(name, email, password).subscribe(err => {
+    if (err) { this.error.set(err); return; }
+    this.router.navigate(['/login']);
+  });
+}
 }
