@@ -1,0 +1,37 @@
+[
+  {
+    "id": "26cb9e77-e86b-4b3d-be5f-c330a58fe94c",
+    "name": "Test User",
+    "email": "test@example.com",
+    "created_at": "2026-11-22T09:56:28.969Z",
+    "password_hash": "$2b$12$PonXNAcMPpbIX7tETNqV0.sMi9KpUgfhFdh6xTg0iPlMBQfmvddXm"
+  },
+  {
+    "id": "9360dc34-288d-4379-873c-ffbd05989d95",
+    "name": "Test User",
+    "email": "test2@example.com",
+    "created_at": "2026-11-22T09:57:59.352Z",
+    "password_hash": "$2b$12$N6pdNY.A5kQXqzuHRyFiEOwS10xXB.o6T1If4ta71POiNpEVVnZtS"
+  },
+  {
+    "id": "45fb31a2-e110-4ae0-acc4-56dd935f488b",
+    "name": "Final Test",
+    "email": "finaltest@example.com",
+    "created_at": "2026-11-22T10:00:29.413Z",
+    "password_hash": "$2b$12$SGKNV5mnZZ6IfseKQU1aneBZaeBbDwy3PeyO5asf6uq7IYP9lc8BW"
+  },
+  {
+    "id": "3d7b7c80-b3e4-4187-89c4-e321cda57d07",
+    "name": "chirayu durgude",
+    "email": "chirayu24beit@student.mes.ac.in",
+    "created_at": "2026-11-22T10:01:36.368Z",
+    "password_hash": "$2b$12$pTLgiMnaU9QDcMRwrY1kQ.SKR.jYgqmy7tt941yAxc9r235poMQRG"
+  },
+  {
+    "id": "71c8024b-fd3b-4993-a49e-b1a9da1c08e3",
+    "name": "chirayu durgude",
+    "email": "chirayudurgude@gmail.com",
+    "created_at": "2026-11-22T14:56:40.190Z",
+    "password_hash": "$2b$12$mCM4z2GpSAIATM/.jK8TjuPqFuHCvN1WPzvVTuNCbGxItyMIUDDUu"
+  }
+]

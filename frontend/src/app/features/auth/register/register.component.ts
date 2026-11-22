@@ -414,11 +414,17 @@ export class RegisterComponent {
     }
 
     const { name, email, password } = this.form.getRawValue();
-    this.auth.register(name, email, password).subscribe(err => {
-      if (err) { this.error.set(err); return; }
-      this.auth.login(email, password).subscribe(res => {
-        if (res.error) { this.error.set(res.error); return; }
-        this.router.navigate(['/dashboard']);
+    this.error.set('');
+
+    this.auth.register(name, email, password).subscribe(result => {
+      if (result) {
+        this.error.set(result);
+        return;
+      }
+
+      this.router.navigate(['/login'], {
+        replaceUrl: true,
+        queryParams: { registered: 'true' },
       });
     });
   }

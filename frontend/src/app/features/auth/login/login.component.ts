@@ -1,7 +1,7 @@
 
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -33,6 +33,12 @@ import { AuthService } from '../../../core/services/auth.service';
             <br>
             Log in to continue your journey.
           </p>
+
+          @if (registered()) {
+            <div class="success-message" role="status">
+              ✓ Account created successfully. Please log in.
+            </div>
+          }
 
           @if (error()) {
             <div class="error-message" role="alert">
@@ -415,6 +421,15 @@ import { AuthService } from '../../../core/services/auth.service';
       margin-bottom: 19px;
     }
 
+    .success-message {
+      padding: 12px;
+      border-radius: 10px;
+      background: #edf8f0;
+      color: #347a45;
+      font-size: 13px;
+      margin-bottom: 19px;
+    }
+
     .footer-text {
       text-align: center;
       color: #a09bb5;
@@ -447,8 +462,10 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   error = signal('');
+  registered = signal(this.route.snapshot.queryParamMap.get('registered') === 'true');
   showPassword = signal(false);
 
   form = this.fb.nonNullable.group({

@@ -14,7 +14,18 @@ app.use(helmet());
 
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+
+      const allowedOrigins = [
+        process.env.CORS_ORIGIN,
+        "http://localhost:4200",
+        "http://127.0.0.1:4200",
+        "http://localhost:3000",
+      ].filter(Boolean);
+
+      callback(null, allowedOrigins.includes(origin));
+    },
   })
 );
 
@@ -56,14 +67,16 @@ async function startServer() {
   try {
     await pool.query("SELECT 1");
     console.log("PostgreSQL connected successfully.");
-
-    app.listen(PORT, () => {
-      console.log(`Backend server running on port ${PORT}`);
-    });
   } catch (error) {
-    console.error("Unable to connect to PostgreSQL:", error.message);
-    process.exit(1);
+    console.warn(
+      "PostgreSQL unavailable; authentication will use local file storage:",
+      error.message
+    );
   }
+
+  app.listen(PORT, () => {
+    console.log(`Backend server running on port ${PORT}`);
+  });
 }
 
 startServer();
