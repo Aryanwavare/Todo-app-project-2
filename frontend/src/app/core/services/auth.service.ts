@@ -20,12 +20,9 @@ export class AuthService {
    
   constructor(private http: HttpClient) {}
   private load(): User[] {
-    const raw = localStorage.getItem(USERS);
-    if (raw) return JSON.parse(raw);
-    const admin: User = { id: 'admin-1', name: 'Site Admin', email: 'admin@todo.app', password: 'admin123', role: 'admin', active: true, createdAt: new Date().toISOString() };
-    localStorage.setItem(USERS, JSON.stringify([admin]));
-    return [admin];
-  }
+  const raw = localStorage.getItem(USERS);
+  return raw ? JSON.parse(raw) : [];
+}
   private persist(list: User[]) { this._users.set(list); localStorage.setItem(USERS, JSON.stringify(list)); }
 
   register(name: string, email: string, password: string): Observable<string | null> {
@@ -40,7 +37,7 @@ login(email: string, password: string): Observable<{ error?: string; user?: User
     map(res => {
       const user: User = {
         id: String(res.user.id), name: res.user.name, email: res.user.email,
-        password: '', role: 'user', active: true, createdAt: res.user.created_at,
+        password: '', role: res.user.role ?? 'user', active: true, createdAt: res.user.created_at,
       };
       localStorage.setItem('todo_token', res.token);
       localStorage.setItem(SESSION, user.id);
