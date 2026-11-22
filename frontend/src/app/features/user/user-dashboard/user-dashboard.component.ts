@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { TaskService } from '../../../core/services/task.service';
 import { Filter, Task } from '../../../core/models/models';
@@ -28,12 +28,16 @@ import { TaskListComponent } from '../../../shared/components/task-list/task-lis
     <app-task-list [tasks]="visible()" [emptyText]="emptyText()" (toggle)="tasks.toggle($event)" (edit)="editing.set($event)" (remove)="remove($event)" />
   </main>`
 })
-export class UserDashboardComponent {
+export class UserDashboardComponent  implements OnInit{
   private auth = inject(AuthService);
   tasks = inject(TaskService);
   filters: Filter[] = ['all', 'pending', 'completed'];
   filter = signal<Filter>('all');
   editing = signal<Task | null>(null);
+  ngOnInit() {
+    const user = this.auth.currentUser();
+    if (user) this.tasks.load(user.id);
+  }
 
   mine = computed(() => this.tasks.forUser(this.auth.currentUser()?.id ?? ''));
   pendingCount = computed(() => this.mine().filter(t => t.status === 'pending').length);

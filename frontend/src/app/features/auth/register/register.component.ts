@@ -29,16 +29,19 @@ export class RegisterComponent {
   form = this.fb.nonNullable.group({
     name: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
     confirm: ['', Validators.required],
   }, { validators: match });
   get c() { return this.form.controls; }
 
   submit() {
     const { name, email, password } = this.form.getRawValue();
-    const err = this.auth.register(name, email, password);
-    if (err) return this.error.set(err);
-    this.auth.login(email, password);
-    this.router.navigate(['/dashboard']);
+    this.auth.register(name, email, password).subscribe(err => {
+      if (err) { this.error.set(err); return; }
+      this.auth.login(email, password).subscribe(res => {
+        if (res.error) { this.error.set(res.error); return; }
+        this.router.navigate(['/dashboard']);
+      });
+    });
   }
 }

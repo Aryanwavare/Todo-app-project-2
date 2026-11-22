@@ -1,8 +1,10 @@
+import cors from '@fastify/cors';
 import 'dotenv/config';
 import Fastify from 'fastify';
 import db from './db.js';
 
 const app = Fastify({ logger: true });
+await app.register(cors,{ origin: 'http://localhost:4200',methods: ['GET','POST','PUT','DELETE'] } );
 
 // ----- Validation rules (same rules as your tables) -----
 const idParams = {

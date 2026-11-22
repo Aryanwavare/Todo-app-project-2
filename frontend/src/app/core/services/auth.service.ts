@@ -1,4 +1,7 @@
 // Authentication and user management service.
+import { HttpClient } from '@angular/common/http';
+import { Observable , map , catchError , of } from 'rxjs';
+const API = 'http://localhost:5000/api/auth';
 import { Injectable, computed, signal } from '@angular/core';
 import { Role, User } from '../models/models';
 
@@ -14,7 +17,8 @@ export class AuthService {
   readonly currentUser = computed(() => this._users().find(u => u.id === this._session()) ?? null);
   readonly isLoggedIn = computed(() => !!this.currentUser());
   readonly role = computed<Role | null>(() => this.currentUser()?.role ?? null);
-
+   
+  constructor(private http: HttpClient) {}
   private load(): User[] {
     const raw = localStorage.getItem(USERS);
     if (raw) return JSON.parse(raw);
@@ -24,19 +28,31 @@ export class AuthService {
   }
   private persist(list: User[]) { this._users.set(list); localStorage.setItem(USERS, JSON.stringify(list)); }
 
-  register(name: string, email: string, password: string): string | null {
-    if (this._users().some(u => u.email.toLowerCase() === email.toLowerCase())) return 'That email is already registered.';
-    this.persist([...this._users(), { id: uid(), name, email, password, role: 'user', active: true, createdAt: new Date().toISOString() }]);
-    return null;
-  }
-  login(email: string, password: string): { error?: string; user?: User } {
-    const u = this._users().find(x => x.email.toLowerCase() === email.toLowerCase() && x.password === password);
-    if (!u) return { error: 'Email or password is incorrect.' };
-    if (!u.active) return { error: 'This account is disabled. Contact an admin.' };
-    this._session.set(u.id); localStorage.setItem(SESSION, u.id);
-    return { user: u };
-  }
-  logout() { this._session.set(null); localStorage.removeItem(SESSION); }
+  register(name: string, email: string, password: string): Observable<string | null> {
+  return this.http.post(`${API}/register`, { name, email, password }).pipe(
+    map(() => null),
+    catchError(err => of(err.error?.message || 'Registration failed. Is the auth server running?'))
+  );
+}
+
+login(email: string, password: string): Observable<{ error?: string; user?: User }> {
+  return this.http.post<any>(`${API}/login`, { email, password }).pipe(
+    map(res => {
+      const user: User = {
+        id: String(res.user.id), name: res.user.name, email: res.user.email,
+        password: '', role: 'user', active: true, createdAt: res.user.created_at,
+      };
+      localStorage.setItem('todo_token', res.token);
+      localStorage.setItem(SESSION, user.id);
+      this.persist([user]);
+      this._session.set(user.id);
+      return { user };
+    }),
+    catchError(err => of({ error: err.error?.message || 'Login failed. Is the auth server running?' }))
+  );
+}
+  logout() { this._session.set(null); localStorage.removeItem(SESSION); localStorage.removeItem('todo_token'); }
   setActive(id: string, active: boolean) { this.persist(this._users().map(u => u.id === id ? { ...u, active } : u)); }
   remove(id: string) { this.persist(this._users().filter(u => u.id !== id)); }
+
 }

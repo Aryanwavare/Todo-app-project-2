@@ -41,8 +41,9 @@ export class LoginComponent {
 
   submit() {
     const { email, password } = this.form.getRawValue();
-    const res = this.auth.login(email, password);
-    if (res.error) return this.error.set(res.error);
-    this.router.navigate([res.user!.role === 'admin' ? '/admin' : '/dashboard']);
+    this.auth.login(email, password).subscribe(res => {
+      if (res.error) { this.error.set(res.error); return; }
+      this.router.navigate([res.user!.role === 'admin' ? '/admin' : '/dashboard']);
+    });
   }
 }
