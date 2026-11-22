@@ -18,11 +18,7 @@ export class TaskService {
 
   constructor(private http: HttpClient) {}
 
-  // TEMPORARY: backend needs a numeric user_id. Fake login ids like 'admin-1' fall back to 1.
-  private apiUserId(userId: string): number {
-    const n = Number(userId);
-    return Number.isInteger(n) && n > 0 ? n : 1;
-  }
+  // samet
   private toTask(a: any, userId: string): Task {
     return {
       id: String(a.id),
@@ -41,7 +37,7 @@ export class TaskService {
   load(userId: string) {
     this.loading.set(true);
     this.error.set('');
-    this.http.get<any[]>(API, { params: { user_id: this.apiUserId(userId) } }).subscribe({
+    this.http.get<any[]>(API).subscribe({
       next: list => { this._tasks.set(list.map(a => this.toTask(a, userId))); this.loading.set(false); },
       error: err => { this.fail(err, 'Could not load tasks'); this.loading.set(false); },
     });
@@ -51,7 +47,7 @@ export class TaskService {
 
   add(userId: string, title: string, description: string) {
     this.error.set('');
-    this.http.post<any>(API, { user_id: this.apiUserId(userId), title, description }).subscribe({
+    this.http.post<any>(API, {  title, description }).subscribe({
       next: created => this._tasks.set([this.toTask(created, userId), ...this._tasks()]),
       error: err => this.fail(err, 'Could not add task'),
     });
