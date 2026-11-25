@@ -1,6 +1,8 @@
 // Task CRUD, status toggling, and statistics service (talks to the backend API).
 import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { AuthService } from './auth.service';
 import { Task } from '../models/models';
 
 const API = 'http://localhost:3000/api/tasks';
@@ -16,7 +18,7 @@ export class TaskService {
     return { total: t.length, completed: done, pending: t.length - done, rate: t.length ? Math.round((done / t.length) * 100) : 0 };
   });
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private auth: AuthService, private router: Router) {}
 
   // samet
   private toTask(a: any, userId: string): Task {
@@ -30,6 +32,12 @@ export class TaskService {
     } as Task;
   }
   private fail(err: any, fallback: string) {
+    if (err?.status === 401) {
+      this.auth.logout();
+      this.error.set('Your session expired. Please log in again.');
+      void this.router.navigate(['/login']);
+      return;
+    }
     this.error.set(err?.error?.error || fallback);
   }
 

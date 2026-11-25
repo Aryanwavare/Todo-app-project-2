@@ -6,13 +6,36 @@ import { Role, User } from '../models/models';
 
 const API = 'http://localhost:5000/api/auth';
 const USERS = 'todo_users', SESSION = 'todo_session';
+const TOKEN = 'todo_token';
 const uid = () => Math.random().toString(36).slice(2, 10);
 
-/** Mock auth backed by localStorage. Swap method bodies for HttpClient calls later. */
+function getValidSession(): string | null {
+  const session = localStorage.getItem(SESSION);
+  const token = localStorage.getItem(TOKEN);
+  const payload = token?.split('.')[1];
+
+  if (!session || !payload) {
+    localStorage.removeItem(SESSION);
+    localStorage.removeItem(TOKEN);
+    return null;
+  }
+
+  try {
+    const claims = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    if (typeof claims.exp === 'number' && claims.exp * 1000 > Date.now()) return session;
+  } catch {
+    // Discard malformed tokens from persisted browser state.
+  }
+
+  localStorage.removeItem(SESSION);
+  localStorage.removeItem(TOKEN);
+  return null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private _users = signal<User[]>(this.load());
-  private _session = signal<string | null>(localStorage.getItem(SESSION));
+  private _session = signal<string | null>(getValidSession());
   readonly users = this._users.asReadonly();
   readonly currentUser = computed(() => this._users().find(u => u.id === this._session()) ?? null);
   readonly isLoggedIn = computed(() => !!this.currentUser());
@@ -39,7 +62,7 @@ login(email: string, password: string): Observable<{ error?: string; user?: User
         id: String(res.user.id), name: res.user.name, email: res.user.email,
         password: '', role: res.user.role ?? 'user', active: true, createdAt: res.user.created_at,
       };
-      localStorage.setItem('todo_token', res.token);
+      localStorage.setItem(TOKEN, res.token);
       localStorage.setItem(SESSION, user.id);
       this.persist([user]);
       this._session.set(user.id);
@@ -48,7 +71,7 @@ login(email: string, password: string): Observable<{ error?: string; user?: User
     catchError(err => of({ error: err.error?.message || 'Login failed. Is the auth server running?' }))
   );
 }
-  logout() { this._session.set(null); localStorage.removeItem(SESSION); localStorage.removeItem('todo_token'); }
+  logout() { this._session.set(null); localStorage.removeItem(SESSION); localStorage.removeItem(TOKEN); }
   setActive(id: string, active: boolean) { this.persist(this._users().map(u => u.id === id ? { ...u, active } : u)); }
   remove(id: string) { this.persist(this._users().filter(u => u.id !== id)); }
 
