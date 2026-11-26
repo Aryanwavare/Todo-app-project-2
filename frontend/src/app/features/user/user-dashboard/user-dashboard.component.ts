@@ -22,8 +22,17 @@ import { AiService } from '../../../core/services/ai.service';
     <section class="ai-box">
   <h2>AI Task Breakdown</h2>
   <input #aiInput placeholder="e.g. Prepare for exams" />
-  <button type="button" [disabled]="aiLoading()" (click)="generate(aiInput.value, 'gemini')">Generate with Gemini</button>
-  <button type="button" [disabled]="aiLoading()" (click)="generate(aiInput.value, 'grok')">Generate with Grok</button>
+  <button type="button"
+  [disabled]="aiLoading() && aiActive() === 'gemini'"
+  (click)="generate(aiInput.value, 'gemini')">
+  {{ aiLoading() && aiActive() === 'gemini' ? 'Generating...' : 'Generate with Gemini' }}
+</button>
+
+<button type="button"
+  [disabled]="aiLoading() && aiActive() === 'groq'"
+  (click)="generate(aiInput.value, 'groq')">
+  {{ aiLoading() && aiActive() === 'groq' ? 'Generating...' : 'Generate with Groq' }}
+</button>
   @if (aiLoading()) { <p>Thinking...</p> }
   @if (aiError()) { <p style="color:red">{{ aiError() }}</p> }
   @if (subtasks().length) {
@@ -58,11 +67,13 @@ aiLoading = signal(false);
 aiError = signal('');
 subtasks = signal<string[]>([]);
 aiProvider = signal('');
+aiActive = signal(' ');
 
-generate(title: string, provider: 'gemini' | 'grok') {
+generate(title: string, provider: 'gemini' | 'groq') {
   title = title.trim();
   if (!title) { this.aiError.set('Type a task first.'); return; }
   this.aiLoading.set(true);
+  this.aiActive.set(provider);
   this.aiError.set('');
   this.subtasks.set([]);
   this.ai.breakdown(title, provider).subscribe({

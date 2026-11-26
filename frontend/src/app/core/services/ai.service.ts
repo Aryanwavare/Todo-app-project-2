@@ -8,7 +8,7 @@ export class AiService {
 
   constructor(private http: HttpClient) {}
 
-breakdown(task: string, provider: 'gemini' | 'grok') {
+breakdown(task: string, provider: 'gemini' | 'groq') {
   return this.http
     .post<{ provider: string; subtasks: string[] }>(this.apiUrl, { task, provider })
     .pipe(timeout(30000));
