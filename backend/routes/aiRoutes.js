@@ -19,6 +19,7 @@ function parseSubtasks(text) {
   console.error("Could not parse AI reply:", text.slice(0, 200));
   throw new Error("AI did not return a list");
 }
+
 async function askGemini(prompt) {
   if (!process.env.GEMINI_API_KEY) throw new Error("Missing GEMINI_API_KEY");
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY.trim() });
@@ -37,7 +38,11 @@ async function askGemini(prompt) {
     try {
       console.log("Trying Gemini model:", model);
       const response = await Promise.race([
-        ai.models.generateContent({ model, contents: prompt, config: {responseMimeType: "application/json"} }),
+        ai.models.generateContent({
+          model,
+          contents: prompt,
+          config: { responseMimeType: "application/json" },
+        }),
         new Promise((_, reject) =>
           setTimeout(() => reject(new Error("timeout after 8s")), 8000)
         ),
@@ -51,58 +56,24 @@ async function askGemini(prompt) {
   }
   throw lastError;
 }
-async function askGrok(prompt) {
-  const apiKey = process.env.XAI_API_KEY?.trim();
-  const model = process.env.GROK_MODEL?.trim();
 
-  if (!apiKey) {
-    throw new Error("Missing XAI_API_KEY");
-  }
-
-  if (!model) {
-    throw new Error("Missing GROK_MODEL");
-  }
-
-  const res = await fetch("https://api.x.ai/v1/chat/completions", {
+async function askGroq(prompt) {
+  const apiKey = (process.env.GROQ_API_KEY || "").trim();
+  if (!apiKey) throw new Error("Missing GROQ_API_KEY");
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: model,
-      messages: [
-        { role: "user", content: prompt }
-      ],
+      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
     }),
   });
-
-  const responseText = await res.text();
-
-  console.log("GROK STATUS:", res.status);
-  console.log("GROK RESPONSE:", responseText);
-
-  let data;
-
-  try {
-    data = JSON.parse(responseText);
-  } catch {
-    throw new Error("Grok returned an invalid response");
-  }
-
-  if (!res.ok) {
-    throw new Error(
-      data.error?.message || "Grok request failed"
-    );
-  }
-
-  const content = data.choices?.[0]?.message?.content;
-
-  if (!content) {
-    throw new Error("Grok returned an empty response");
-  }
-
-  return content;
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || "Groq request failed");
+  return data.choices[0].message.content;
 }
 
 router.post("/", async (req, res) => {
@@ -113,9 +84,11 @@ router.post("/", async (req, res) => {
   }
 
   try {
+    const start = Date.now();
     const prompt = PROMPT(task.trim());
     const text =
-      provider === "grok" ? await askGrok(prompt) : await askGemini(prompt);
+      provider === "groq" ? await askGroq(prompt) : await askGemini(prompt);
+    console.log(`${provider} took ${((Date.now() - start) / 1000).toFixed(2)} seconds`);
     res.status(200).json({ provider, subtasks: parseSubtasks(text) });
   } catch (error) {
     console.error("AI error:", error.message);
