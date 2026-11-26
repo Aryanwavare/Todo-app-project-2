@@ -7,6 +7,7 @@ const helmet = require("helmet");
 
 const pool = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 
 const app = express();
 
@@ -41,7 +42,7 @@ app.get("/api/health/db", async (req, res) => {
     });
   }
 });
-
+app.use("/api/ai", aiRoutes);
 app.use("/api/auth", authRoutes);
 
 app.use((req, res) => {

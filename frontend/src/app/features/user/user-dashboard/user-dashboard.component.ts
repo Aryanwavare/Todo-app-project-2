@@ -6,7 +6,7 @@ import { NavbarComponent } from '../../../shared/components/navbar/navbar.compon
 import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 import { TaskFormComponent } from '../../../shared/components/task-form/task-form.component';
 import { TaskListComponent } from '../../../shared/components/task-list/task-list.component';
-
+import { AiService } from '../../../core/services/ai.service';
 @Component({
   selector: 'app-user-dashboard', standalone: true,
   imports: [NavbarComponent, StatCardComponent, TaskFormComponent, TaskListComponent],
@@ -19,6 +19,20 @@ import { TaskListComponent } from '../../../shared/components/task-list/task-lis
       <app-stat-card label="Pending" [value]="pendingCount()" />
       <app-stat-card label="Completed" [value]="mine().length - pendingCount()" />
     </section>
+    <section class="ai-box">
+  <h2>AI Task Breakdown</h2>
+  <input #aiInput placeholder="e.g. Prepare for exams" />
+  <button type="button" [disabled]="aiLoading()" (click)="generate(aiInput.value, 'gemini')">Generate with Gemini</button>
+  <button type="button" [disabled]="aiLoading()" (click)="generate(aiInput.value, 'grok')">Generate with Grok</button>
+  @if (aiLoading()) { <p>Thinking...</p> }
+  @if (aiError()) { <p style="color:red">{{ aiError() }}</p> }
+  @if (subtasks().length) {
+    <h3>Subtasks ({{ aiProvider() }})</h3>
+    <ul>
+      @for (s of subtasks(); track s) { <li>{{ s }}</li> }
+    </ul>
+  }
+</section>
     <app-task-form [task]="editing()" (save)="onSave($event)" (cancel)="editing.set(null)" />
     <div class="tabs" role="tablist">
       @for (f of filters; track f) {
@@ -37,7 +51,32 @@ export class UserDashboardComponent  implements OnInit{
   ngOnInit() {
     const user = this.auth.currentUser();
     if (user) this.tasks.load(user.id);
+    
   }
+  private ai = inject(AiService);
+aiLoading = signal(false);
+aiError = signal('');
+subtasks = signal<string[]>([]);
+aiProvider = signal('');
+
+generate(title: string, provider: 'gemini' | 'grok') {
+  title = title.trim();
+  if (!title) { this.aiError.set('Type a task first.'); return; }
+  this.aiLoading.set(true);
+  this.aiError.set('');
+  this.subtasks.set([]);
+  this.ai.breakdown(title, provider).subscribe({
+    next: (res) => {
+      this.subtasks.set(res.subtasks);
+      this.aiProvider.set(res.provider);
+      this.aiLoading.set(false);
+    },
+    error: (err) => {
+      this.aiError.set(err.error?.message || 'AI request failed.');
+      this.aiLoading.set(false);
+    },
+  });
+}
 
   mine = computed(() => this.tasks.forUser(this.auth.currentUser()?.id ?? ''));
   pendingCount = computed(() => this.mine().filter(t => t.status === 'pending').length);
