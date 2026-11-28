@@ -44,10 +44,24 @@ export class UserDashboardComponent  implements OnInit{
   visible = computed(() => this.filter() === 'all' ? this.mine() : this.mine().filter(t => t.status === this.filter()));
   emptyText = computed(() => this.filter() === 'all' ? 'No tasks yet. Add your first one above.' : `No ${this.filter()} tasks.`);
 
-  onSave(v: { title: string; description: string }) {
-    const e = this.editing();
-    if (e) { this.tasks.update(e.id, v); this.editing.set(null); }
-    else this.tasks.add(this.auth.currentUser()!.id, v.title, v.description);
+  onSave(v: {
+  title: string;
+  description: string;
+  dueDate: string | null;
+}) {
+  const e = this.editing();
+
+  if (e) {
+    this.tasks.update(e.id, v);
+    this.editing.set(null);
+  } else {
+    this.tasks.add(
+      this.auth.currentUser()!.id,
+      v.title,
+      v.description,
+      v.dueDate
+    );
   }
+}
   remove(id: string) { if (confirm('Delete this task?')) this.tasks.remove(id); }
 }

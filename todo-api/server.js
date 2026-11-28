@@ -63,7 +63,13 @@ app.setErrorHandler((err, req, reply) => {
 
 // ----- CREATE -----
 app.post('/api/tasks', { schema: createSchema, onRequest: [authenticate] }, async (req, reply) => {
-  const [task] = await db('tasks').insert({ ...req.body, user_id: req.user.id }).returning('*');
+  const [task] = await db('tasks')
+  .insert({
+    ...req.body,
+    status: req.body.status ?? 'pending',
+    user_id: req.user.id
+  })
+  .returning('*');
   return reply.code(201).send(task);
 });
 

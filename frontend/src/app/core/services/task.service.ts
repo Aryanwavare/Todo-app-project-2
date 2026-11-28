@@ -29,6 +29,7 @@ export class TaskService {
       description: a.description ?? '',
       status: a.status,
       createdAt: a.created_at,
+      dueDate: a.due_date ?? null,
     } as Task;
   }
   private fail(err: any, fallback: string) {
@@ -53,17 +54,28 @@ export class TaskService {
 
   forUser(userId: string) { return this._tasks().filter(t => t.userId === userId); }
 
-  add(userId: string, title: string, description: string) {
+  add(userId: string, title: string, description: string, dueDate: string | null) {
     this.error.set('');
-    this.http.post<any>(API, {  title, description }).subscribe({
+    this.http.post<any>(API, {
+  title,
+  description,
+  due_date: dueDate
+}).subscribe({
       next: created => this._tasks.set([this.toTask(created, userId), ...this._tasks()]),
       error: err => this.fail(err, 'Could not add task'),
     });
   }
 
-  update(id: string, patch: Partial<Pick<Task, 'title' | 'description'>>) {
+  update(id: string, patch: Partial<Pick<Task, 'title' | 'description' | 'dueDate'>>) {
     this.error.set('');
-    this.http.put<any>(`${API}/${id}`, patch).subscribe({
+    const body: any = { ...patch };
+
+if ('dueDate' in body) {
+  body.due_date = body.dueDate;
+  delete body.dueDate;
+}
+
+this.http.put<any>(`${API}/${id}`, body).subscribe({
       next: saved => this._tasks.set(this._tasks().map(t => t.id === id ? this.toTask(saved, t.userId) : t)),
       error: err => this.fail(err, 'Could not update task'),
     });
